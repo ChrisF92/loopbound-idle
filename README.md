@@ -30,6 +30,10 @@ ProjectSettings/                    Minimal Unity project version settings
 The first Unity scene should use `KingdomGameController` as the bridge between
 UI buttons/text and the pure C# `KingdomGame` facade.
 
+See `docs/prototype-ui-wiring-checklist.md` for the first playable scene wiring
+map. `KingdomBalanceSimulator` can run deterministic early-game autoplay
+snapshots without opening Unity.
+
 ## Recommended engine direction
 
 Use Unity for the shipped Android client. The main reason is practical: Android

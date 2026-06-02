@@ -23,6 +23,10 @@ Responsibilities:
 The core should avoid direct UI dependencies. Unity UI should read from and call
 into this layer.
 
+`KingdomBalanceSimulator` lives in the core as a deterministic autoplay harness
+for early balance snapshots. Use it for tests and quick tuning reports; keep
+player-facing simulation behavior in `KingdomSimulator`.
+
 ### Presentation
 
 Location: `Assets/LoopboundIdle/Scripts/Presentation`
