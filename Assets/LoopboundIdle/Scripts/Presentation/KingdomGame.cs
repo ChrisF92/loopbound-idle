@@ -210,6 +210,27 @@ namespace LoopboundIdle.Kingdom.Presentation
             return true;
         }
 
+        public bool DeleteSave()
+        {
+            if (saveStore == null)
+            {
+                LastError = "No save store is configured.";
+                return false;
+            }
+
+            try
+            {
+                saveStore.Delete();
+                LastError = null;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                LastError = exception.Message;
+                return false;
+            }
+        }
+
         public string ExportSave()
         {
             return ExportSave(CurrentUnixTimeSeconds());

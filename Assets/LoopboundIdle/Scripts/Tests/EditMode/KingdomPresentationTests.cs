@@ -42,6 +42,51 @@ namespace LoopboundIdle.Kingdom.Tests.EditMode
         }
 
         [Test]
+        public void DebugToolsGrantResourcesAndRefreshViewModel()
+        {
+            var game = new KingdomGame();
+            var debugTools = new KingdomDebugTools(game);
+
+            Assert.IsTrue(debugTools.GrantResource(ResourceId.Stone, 250d));
+
+            Assert.AreEqual(250d, game.State.wallet.Get(ResourceId.Stone));
+            Assert.AreEqual("250", game.ViewModel.FindResource(ResourceId.Stone).amountLabel);
+        }
+
+        [Test]
+        public void DebugToolsGrantActiveChallengeGoals()
+        {
+            var game = new KingdomGame();
+            var debugTools = new KingdomDebugTools(game);
+
+            Assert.IsTrue(game.StartChallenge(ChallengeId.FamineAge));
+            Assert.IsTrue(debugTools.GrantActiveChallengeGoals());
+
+            Assert.IsTrue(game.ViewModel.canCompleteActiveChallenge);
+            Assert.GreaterOrEqual(game.State.wallet.Get(ResourceId.Food), 600d);
+            Assert.GreaterOrEqual(game.State.wallet.Get(ResourceId.Knowledge), 45d);
+        }
+
+        [Test]
+        public void DebugToolsGenerateBalanceReportMarkdown()
+        {
+            var debugTools = new KingdomDebugTools(new KingdomGame());
+
+            var markdown = debugTools.GenerateBalanceReportMarkdown(new BalanceSimulationOptions
+            {
+                durationSeconds = 10d,
+                stepSeconds = 1d,
+                snapshotSeconds = new[] { 10d },
+                buyBuildings = true,
+                buyUpgrades = true,
+                maxPurchasesPerStep = 25
+            });
+
+            Assert.IsTrue(markdown.Contains("# Balance Simulation Report"));
+            Assert.AreEqual(markdown, debugTools.LastBalanceReportMarkdown);
+        }
+
+        [Test]
         public void FacadeUpdatesViewModelAfterPurchase()
         {
             var game = new KingdomGame();
@@ -126,6 +171,29 @@ namespace LoopboundIdle.Kingdom.Tests.EditMode
                 Assert.AreEqual(20L, loadedGame.State.lastSavedUnixTimeSeconds);
                 Assert.Greater(loadedGame.State.wallet.Get(ResourceId.Food), foodBeforeSave);
                 Assert.AreEqual("10s", loadedGame.ViewModel.lastOfflineLabel);
+            }
+            finally
+            {
+                store.Delete();
+            }
+        }
+
+        [Test]
+        public void FacadeDeletesLocalSave()
+        {
+            var catalog = KingdomCatalog.CreateDefault();
+            var path = Path.Combine(Path.GetTempPath(), "loopbound-kingdom-delete-save.json");
+            var store = new KingdomFileSaveStore(path);
+            var game = new KingdomGame(catalog, null, store);
+
+            try
+            {
+                Assert.IsTrue(game.Save(10L));
+                Assert.IsTrue(File.Exists(path));
+
+                Assert.IsTrue(game.DeleteSave());
+
+                Assert.IsFalse(File.Exists(path));
             }
             finally
             {

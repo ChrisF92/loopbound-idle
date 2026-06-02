@@ -47,6 +47,11 @@ Responsibilities:
 Presentation code may depend on UnityEngine and TMPro. Core balance code should
 not.
 
+`KingdomDebugTools` and `KingdomDebugController` are prototype-only helpers for
+resource grants, challenge goal grants, save resets, and balance report
+generation. Keep them out of production-facing UI or behind a development-only
+entry point.
+
 ### Persistence
 
 Location: `Assets/LoopboundIdle/Scripts/Persistence`

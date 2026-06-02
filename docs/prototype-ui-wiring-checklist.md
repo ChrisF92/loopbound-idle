@@ -102,11 +102,24 @@ Create one row per `ChallengeViewModel` in `challenges`.
 - Save button: `KingdomGameController.Save()`
 - Load button: `KingdomGameController.Load()`
 - New game button: `KingdomGameController.NewGame()`
+- Delete local save debug/settings button: `KingdomGameController.DeleteSave()`
 - Export button: `KingdomGameController.ExportSaveText()`
 - Export text field: latest `exportTextCreated` payload or `LastExportText`
 - Import input field: player-provided save text
 - Import button: `KingdomGameController.ImportSaveText(inputField.text)`
 - Error label: latest `errorChanged` payload
+
+## Optional debug panel
+
+Use `KingdomDebugController` only in prototype/development scenes.
+
+- Grant resource button: `KingdomDebugController.GrantResource(resourceId)`
+- Grant all resources button: `KingdomDebugController.GrantAllResources()`
+- Collapse setup button: `KingdomDebugController.GrantCollapseTestResources()`
+- Challenge setup button: `KingdomDebugController.GrantActiveChallengeGoals()`
+- Delete local save button: `KingdomDebugController.DeleteLocalSave()`
+- Generate balance report button: `KingdomDebugController.GenerateBalanceReport()`
+- Balance report text field: latest `balanceReportGenerated` payload
 
 ## First playable acceptance pass
 

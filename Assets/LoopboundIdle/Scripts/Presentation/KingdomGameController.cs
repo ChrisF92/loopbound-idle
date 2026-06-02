@@ -147,6 +147,14 @@ namespace LoopboundIdle.Kingdom.Presentation
             return succeeded;
         }
 
+        public bool DeleteSave()
+        {
+            EnsureGame();
+            var succeeded = game.DeleteSave();
+            PublishError();
+            return succeeded;
+        }
+
         public bool BuyBuilding(int buildingId)
         {
             EnsureGame();

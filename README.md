@@ -37,6 +37,9 @@ snapshots without opening Unity.
 See `docs/manual-qa-checklist.md` for the first manual test pass once Unity or
 device access is available.
 
+See `docs/pr-acceptance-checklist.md` for merge-readiness gates before shipping
+the prototype support branch into `main`.
+
 ## Recommended engine direction
 
 Use Unity for the shipped Android client. The main reason is practical: Android
