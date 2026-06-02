@@ -1,0 +1,229 @@
+using System.IO;
+using LoopboundIdle.Kingdom.Core;
+using LoopboundIdle.Kingdom.Persistence;
+using LoopboundIdle.Kingdom.Presentation;
+using NUnit.Framework;
+
+namespace LoopboundIdle.Kingdom.Tests.EditMode
+{
+    public sealed class KingdomPresentationTests
+    {
+        [Test]
+        public void NumberFormatterAbbreviatesLargeValuesAndRates()
+        {
+            var formatter = new KingdomNumberFormatter();
+
+            Assert.AreEqual("999", formatter.FormatNumber(999d));
+            Assert.AreEqual("1.23K", formatter.FormatNumber(1234d));
+            Assert.AreEqual("0.0017/s", formatter.FormatRate(1d / 600d));
+            Assert.AreEqual("9.88M/s", formatter.FormatRate(9876543d));
+            Assert.AreEqual("1h 1m", formatter.FormatDuration(3661d));
+        }
+
+        [Test]
+        public void BalanceReportFormatterCreatesMarkdownSummary()
+        {
+            var catalog = KingdomCatalog.CreateDefault();
+            var report = new KingdomBalanceSimulator().Simulate(catalog, new BalanceSimulationOptions
+            {
+                durationSeconds = 60d,
+                stepSeconds = 1d,
+                snapshotSeconds = new[] { 0d, 60d },
+                buyBuildings = true,
+                buyUpgrades = true,
+                maxPurchasesPerStep = 25
+            });
+            var markdown = new KingdomBalanceReportFormatter().FormatMarkdown(report, catalog);
+
+            Assert.IsTrue(markdown.Contains("# Balance Simulation Report"));
+            Assert.IsTrue(markdown.Contains("| Time | Building Buys | Upgrade Buys |"));
+            Assert.IsTrue(markdown.Contains("Farms"));
+            Assert.IsTrue(markdown.Contains("Food:"));
+        }
+
+        [Test]
+        public void DebugToolsGrantResourcesAndRefreshViewModel()
+        {
+            var game = new KingdomGame();
+            var debugTools = new KingdomDebugTools(game);
+
+            Assert.IsTrue(debugTools.GrantResource(ResourceId.Stone, 250d));
+
+            Assert.AreEqual(250d, game.State.wallet.Get(ResourceId.Stone));
+            Assert.AreEqual("250", game.ViewModel.FindResource(ResourceId.Stone).amountLabel);
+        }
+
+        [Test]
+        public void DebugToolsGrantActiveChallengeGoals()
+        {
+            var game = new KingdomGame();
+            var debugTools = new KingdomDebugTools(game);
+
+            Assert.IsTrue(game.StartChallenge(ChallengeId.FamineAge));
+            Assert.IsTrue(debugTools.GrantActiveChallengeGoals());
+
+            Assert.IsTrue(game.ViewModel.canCompleteActiveChallenge);
+            Assert.GreaterOrEqual(game.State.wallet.Get(ResourceId.Food), 600d);
+            Assert.GreaterOrEqual(game.State.wallet.Get(ResourceId.Knowledge), 45d);
+        }
+
+        [Test]
+        public void DebugToolsGenerateBalanceReportMarkdown()
+        {
+            var debugTools = new KingdomDebugTools(new KingdomGame());
+
+            var markdown = debugTools.GenerateBalanceReportMarkdown(new BalanceSimulationOptions
+            {
+                durationSeconds = 10d,
+                stepSeconds = 1d,
+                snapshotSeconds = new[] { 10d },
+                buyBuildings = true,
+                buyUpgrades = true,
+                maxPurchasesPerStep = 25
+            });
+
+            Assert.IsTrue(markdown.Contains("# Balance Simulation Report"));
+            Assert.AreEqual(markdown, debugTools.LastBalanceReportMarkdown);
+        }
+
+        [Test]
+        public void FacadeUpdatesViewModelAfterPurchase()
+        {
+            var game = new KingdomGame();
+
+            Assert.IsTrue(game.BuyBuilding(BuildingId.Farm));
+
+            Assert.AreEqual(1, game.State.GetBuildingProgress(BuildingId.Farm).level);
+            Assert.AreEqual(1, game.ViewModel.buildings[0].level);
+            Assert.AreEqual("Level 1", game.ViewModel.buildings[0].levelLabel);
+            Assert.AreEqual(ResourceId.Food, game.ViewModel.resources[1].resourceId);
+            Assert.Greater(game.ViewModel.resources[1].amountPerSecond, 0d);
+        }
+
+        [Test]
+        public void ViewModelLookupHelpersFindRowsById()
+        {
+            var game = new KingdomGame();
+
+            Assert.AreEqual(ResourceId.Food, game.ViewModel.FindResource(ResourceId.Food).resourceId);
+            Assert.AreEqual(BuildingId.Farm, game.ViewModel.FindBuilding(BuildingId.Farm).buildingId);
+            Assert.AreEqual(UpgradeId.CropRotation, game.ViewModel.FindUpgrade(UpgradeId.CropRotation).upgradeId);
+            Assert.AreEqual(ChallengeId.FamineAge, game.ViewModel.FindChallenge(ChallengeId.FamineAge).challengeId);
+        }
+
+        [Test]
+        public void ViewModelLookupHelpersHandleMissingRows()
+        {
+            var viewModel = new KingdomGameViewModel
+            {
+                resources = null,
+                buildings = new BuildingViewModel[0],
+                upgrades = new UpgradeViewModel[0],
+                challenges = new ChallengeViewModel[0]
+            };
+            ResourceViewModel resource;
+            BuildingViewModel building;
+            UpgradeViewModel upgrade;
+            ChallengeViewModel challenge;
+
+            Assert.IsNull(viewModel.FindResource(ResourceId.Food));
+            Assert.IsFalse(viewModel.TryFindResource(ResourceId.Food, out resource));
+            Assert.IsFalse(viewModel.TryFindBuilding(BuildingId.Farm, out building));
+            Assert.IsFalse(viewModel.TryFindUpgrade(UpgradeId.CropRotation, out upgrade));
+            Assert.IsFalse(viewModel.TryFindChallenge(ChallengeId.FamineAge, out challenge));
+        }
+
+        [Test]
+        public void FacadeExportsAndImportsSaveText()
+        {
+            var game = new KingdomGame();
+            game.State.wallet.Set(ResourceId.Food, 500d);
+            Assert.IsTrue(game.BuyBuilding(BuildingId.Farm));
+
+            var exported = game.ExportSave(1000L);
+            var importedGame = new KingdomGame();
+
+            Assert.IsTrue(importedGame.ImportSave(exported, 1000L));
+            Assert.AreEqual(1, importedGame.State.GetBuildingProgress(BuildingId.Farm).level);
+            Assert.AreEqual(game.State.wallet.Get(ResourceId.Food), importedGame.State.wallet.Get(ResourceId.Food));
+            Assert.AreEqual(1000L, importedGame.State.lastSavedUnixTimeSeconds);
+        }
+
+        [Test]
+        public void FacadeSavesLoadsAndAppliesOfflineProgress()
+        {
+            var catalog = KingdomCatalog.CreateDefault();
+            var path = Path.Combine(Path.GetTempPath(), "loopbound-kingdom-facade-save.json");
+            var store = new KingdomFileSaveStore(path);
+
+            try
+            {
+                var game = new KingdomGame(catalog, null, store);
+                Assert.IsTrue(game.BuyBuilding(BuildingId.Farm));
+                var foodBeforeSave = game.State.wallet.Get(ResourceId.Food);
+
+                Assert.IsTrue(game.Save(10L));
+
+                var loadedGame = new KingdomGame(catalog, null, store);
+                Assert.IsTrue(loadedGame.Load(20L));
+
+                Assert.AreEqual(10d, loadedGame.LastOfflineSeconds);
+                Assert.AreEqual(20L, loadedGame.State.lastSavedUnixTimeSeconds);
+                Assert.Greater(loadedGame.State.wallet.Get(ResourceId.Food), foodBeforeSave);
+                Assert.AreEqual("10s", loadedGame.ViewModel.lastOfflineLabel);
+            }
+            finally
+            {
+                store.Delete();
+            }
+        }
+
+        [Test]
+        public void FacadeDeletesLocalSave()
+        {
+            var catalog = KingdomCatalog.CreateDefault();
+            var path = Path.Combine(Path.GetTempPath(), "loopbound-kingdom-delete-save.json");
+            var store = new KingdomFileSaveStore(path);
+            var game = new KingdomGame(catalog, null, store);
+
+            try
+            {
+                Assert.IsTrue(game.Save(10L));
+                Assert.IsTrue(File.Exists(path));
+
+                Assert.IsTrue(game.DeleteSave());
+
+                Assert.IsFalse(File.Exists(path));
+            }
+            finally
+            {
+                store.Delete();
+            }
+        }
+
+        [Test]
+        public void FailedImportKeepsCurrentState()
+        {
+            var game = new KingdomGame();
+            Assert.IsTrue(game.BuyBuilding(BuildingId.Farm));
+
+            Assert.IsFalse(game.ImportSave("not a save", 100L));
+
+            Assert.AreEqual(1, game.State.GetBuildingProgress(BuildingId.Farm).level);
+            Assert.IsNotEmpty(game.LastError);
+        }
+
+        [Test]
+        public void ChallengeViewModelReflectsActiveChallenge()
+        {
+            var game = new KingdomGame();
+
+            Assert.IsTrue(game.StartChallenge(ChallengeId.FamineAge));
+
+            Assert.AreEqual(ChallengeId.FamineAge, game.ViewModel.activeChallengeId);
+            Assert.AreEqual("Famine Age", game.ViewModel.activeChallengeLabel);
+            Assert.IsTrue(game.ViewModel.challenges[0].active);
+            Assert.IsFalse(game.ViewModel.challenges[0].canComplete);
+        }
+    }
+}

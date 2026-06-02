@@ -23,9 +23,17 @@ Responsibilities:
 The core should avoid direct UI dependencies. Unity UI should read from and call
 into this layer.
 
+`KingdomBalanceSimulator` lives in the core as a deterministic autoplay harness
+for early balance snapshots. Use it for tests and quick tuning reports; keep
+player-facing simulation behavior in `KingdomSimulator`.
+
+`KingdomBalanceReportFormatter` lives in presentation so Markdown tuning
+reports can reuse user-facing names and number formatting without adding UI
+dependencies to core.
+
 ### Presentation
 
-Future location: `Assets/LoopboundIdle/Scripts/Presentation`
+Location: `Assets/LoopboundIdle/Scripts/Presentation`
 
 Responsibilities:
 
@@ -39,9 +47,14 @@ Responsibilities:
 Presentation code may depend on UnityEngine and TMPro. Core balance code should
 not.
 
+`KingdomDebugTools` and `KingdomDebugController` are prototype-only helpers for
+resource grants, challenge goal grants, save resets, and balance report
+generation. Keep them out of production-facing UI or behind a development-only
+entry point.
+
 ### Persistence
 
-Future location: `Assets/LoopboundIdle/Scripts/Persistence`
+Location: `Assets/LoopboundIdle/Scripts/Persistence`
 
 Responsibilities:
 
@@ -51,6 +64,8 @@ Responsibilities:
 - Offline progress timestamp handling.
 
 Keep a `saveVersion` field on save data and migrate old saves explicitly.
+Imports should reject unrecognized payloads before deserialization and sanitize
+loaded numeric progress before gameplay uses it.
 
 ## Balance data
 

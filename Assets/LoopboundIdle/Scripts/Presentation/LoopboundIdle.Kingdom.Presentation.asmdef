@@ -1,0 +1,17 @@
+{
+  "name": "LoopboundIdle.Kingdom.Presentation",
+  "rootNamespace": "LoopboundIdle.Kingdom.Presentation",
+  "references": [
+    "LoopboundIdle.Kingdom.Core",
+    "LoopboundIdle.Kingdom.Persistence"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -18,10 +18,27 @@ The project is intentionally designed for a small Android release scope:
 
 ```text
 Assets/LoopboundIdle/Scripts/Core/   Unity-compatible game simulation code
+Assets/LoopboundIdle/Scripts/Persistence/
+                                    Save/load, export/import, and migrations
+Assets/LoopboundIdle/Scripts/Presentation/
+                                    KingdomGame facade, view models, formatting
 docs/                               Product, design, and implementation notes
 Packages/                           Unity package manifest
 ProjectSettings/                    Minimal Unity project version settings
 ```
+
+The first Unity scene should use `KingdomGameController` as the bridge between
+UI buttons/text and the pure C# `KingdomGame` facade.
+
+See `docs/prototype-ui-wiring-checklist.md` for the first playable scene wiring
+map. `KingdomBalanceSimulator` can run deterministic early-game autoplay
+snapshots without opening Unity.
+
+See `docs/manual-qa-checklist.md` for the first manual test pass once Unity or
+device access is available.
+
+See `docs/pr-acceptance-checklist.md` for merge-readiness gates before shipping
+the prototype support branch into `main`.
 
 ## Recommended engine direction
 

@@ -58,5 +58,21 @@ namespace LoopboundIdle.Kingdom.Tests.EditMode
             Assert.AreEqual(1, state.GetChallengeProgress(ChallengeId.FamineAge).completions);
             Assert.AreEqual(ChallengeId.None, state.activeChallengeId);
         }
+
+        [Test]
+        public void OfflineProgressIsCapped()
+        {
+            var catalog = KingdomCatalog.CreateDefault();
+            var state = KingdomState.CreateNew(catalog);
+            var simulator = new KingdomSimulator();
+
+            state.GetBuildingProgress(BuildingId.Farm).level = 1;
+            state.lastSavedUnixTimeSeconds = 10L;
+
+            var simulatedSeconds = simulator.AdvanceOffline(state, catalog, 10L + (long)KingdomSimulator.MaxOfflineSeconds * 2L);
+
+            Assert.AreEqual(KingdomSimulator.MaxOfflineSeconds, simulatedSeconds);
+            Assert.AreEqual(10L + (long)KingdomSimulator.MaxOfflineSeconds * 2L, state.lastSavedUnixTimeSeconds);
+        }
     }
 }
