@@ -28,6 +28,11 @@ namespace LoopboundIdle.Kingdom.Persistence
                 throw new ArgumentException("Save JSON is empty.", "json");
             }
 
+            if (!LooksLikeKingdomStateJson(json))
+            {
+                throw new ArgumentException("Save JSON does not look like Kingdom state data.", "json");
+            }
+
             var state = JsonUtility.FromJson<KingdomState>(json);
             return KingdomSaveMigrator.Migrate(state, catalog);
         }
@@ -88,6 +93,12 @@ namespace LoopboundIdle.Kingdom.Persistence
             var trimmed = saveText.Trim();
             if (trimmed.StartsWith("{", StringComparison.Ordinal))
             {
+                if (!LooksLikeKingdomStateJson(trimmed))
+                {
+                    error = "Save JSON does not look like Kingdom state data.";
+                    return false;
+                }
+
                 json = trimmed;
                 return true;
             }
@@ -102,6 +113,13 @@ namespace LoopboundIdle.Kingdom.Persistence
             try
             {
                 json = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+                if (!LooksLikeKingdomStateJson(json))
+                {
+                    error = "Save payload did not decode to Kingdom state JSON.";
+                    json = null;
+                    return false;
+                }
+
                 return true;
             }
             catch (FormatException)
@@ -109,6 +127,21 @@ namespace LoopboundIdle.Kingdom.Persistence
                 error = "Save export text is not valid base64.";
                 return false;
             }
+        }
+
+        private static bool LooksLikeKingdomStateJson(string json)
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                return false;
+            }
+
+            var trimmed = json.Trim();
+            return trimmed.StartsWith("{", StringComparison.Ordinal) &&
+                trimmed.EndsWith("}", StringComparison.Ordinal) &&
+                trimmed.IndexOf("\"saveVersion\"", StringComparison.Ordinal) >= 0 &&
+                trimmed.IndexOf("\"wallet\"", StringComparison.Ordinal) >= 0 &&
+                trimmed.IndexOf("\"buildings\"", StringComparison.Ordinal) >= 0;
         }
     }
 }

@@ -27,6 +27,10 @@ into this layer.
 for early balance snapshots. Use it for tests and quick tuning reports; keep
 player-facing simulation behavior in `KingdomSimulator`.
 
+`KingdomBalanceReportFormatter` lives in presentation so Markdown tuning
+reports can reuse user-facing names and number formatting without adding UI
+dependencies to core.
+
 ### Presentation
 
 Location: `Assets/LoopboundIdle/Scripts/Presentation`
@@ -55,6 +59,8 @@ Responsibilities:
 - Offline progress timestamp handling.
 
 Keep a `saveVersion` field on save data and migrate old saves explicitly.
+Imports should reject unrecognized payloads before deserialization and sanitize
+loaded numeric progress before gameplay uses it.
 
 ## Balance data
 

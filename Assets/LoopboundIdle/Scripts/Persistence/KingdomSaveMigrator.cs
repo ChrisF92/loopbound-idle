@@ -21,9 +21,9 @@ namespace LoopboundIdle.Kingdom.Persistence
 
             state.saveVersion = CurrentSaveVersion;
             state.loopIndex = Math.Max(1, state.loopIndex);
-            state.elapsedSeconds = Math.Max(0d, state.elapsedSeconds);
-            state.collapsePressure = Math.Max(0d, state.collapsePressure);
-            state.lastSavedUnixTimeSeconds = Math.Max(0L, state.lastSavedUnixTimeSeconds);
+            state.elapsedSeconds = SanitizeNonNegative(state.elapsedSeconds);
+            state.collapsePressure = SanitizeNonNegative(state.collapsePressure);
+            state.lastSavedUnixTimeSeconds = SanitizeNonNegative(state.lastSavedUnixTimeSeconds);
             state.wallet = MigrateWallet(state.wallet);
             state.buildings = MigrateBuildings(state.buildings, catalog);
             state.upgrades = MigrateUpgrades(state.upgrades, catalog);
@@ -48,7 +48,7 @@ namespace LoopboundIdle.Kingdom.Persistence
             for (var i = 0; i < migrated.resources.Length; i++)
             {
                 var resourceId = migrated.resources[i].resourceId;
-                migrated.resources[i].amount = Math.Max(0d, GetResourceAmount(wallet.resources, resourceId, migrated.resources[i].amount));
+                migrated.resources[i].amount = SanitizeNonNegative(GetResourceAmount(wallet.resources, resourceId, migrated.resources[i].amount));
             }
 
             return migrated;
@@ -78,7 +78,7 @@ namespace LoopboundIdle.Kingdom.Persistence
             for (var i = 0; i < catalog.buildings.Length; i++)
             {
                 var buildingId = catalog.buildings[i].buildingId;
-                migrated[i] = new BuildingProgress(buildingId, Math.Max(0, GetBuildingLevel(existing, buildingId)));
+                migrated[i] = new BuildingProgress(buildingId, SanitizeNonNegative(GetBuildingLevel(existing, buildingId)));
             }
 
             return migrated;
@@ -138,7 +138,7 @@ namespace LoopboundIdle.Kingdom.Persistence
             for (var i = 0; i < catalog.challenges.Length; i++)
             {
                 var challengeId = catalog.challenges[i].challengeId;
-                migrated[i] = new ChallengeProgress(challengeId, Math.Max(0, GetChallengeCompletions(existing, challengeId)));
+                migrated[i] = new ChallengeProgress(challengeId, SanitizeNonNegative(GetChallengeCompletions(existing, challengeId)));
             }
 
             return migrated;
@@ -178,6 +178,26 @@ namespace LoopboundIdle.Kingdom.Persistence
             }
 
             return false;
+        }
+
+        private static double SanitizeNonNegative(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value) || value < 0d)
+            {
+                return 0d;
+            }
+
+            return value;
+        }
+
+        private static int SanitizeNonNegative(int value)
+        {
+            return value < 0 ? 0 : value;
+        }
+
+        private static long SanitizeNonNegative(long value)
+        {
+            return value < 0L ? 0L : value;
         }
     }
 }

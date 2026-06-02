@@ -21,6 +21,27 @@ namespace LoopboundIdle.Kingdom.Tests.EditMode
         }
 
         [Test]
+        public void BalanceReportFormatterCreatesMarkdownSummary()
+        {
+            var catalog = KingdomCatalog.CreateDefault();
+            var report = new KingdomBalanceSimulator().Simulate(catalog, new BalanceSimulationOptions
+            {
+                durationSeconds = 60d,
+                stepSeconds = 1d,
+                snapshotSeconds = new[] { 0d, 60d },
+                buyBuildings = true,
+                buyUpgrades = true,
+                maxPurchasesPerStep = 25
+            });
+            var markdown = new KingdomBalanceReportFormatter().FormatMarkdown(report, catalog);
+
+            Assert.IsTrue(markdown.Contains("# Balance Simulation Report"));
+            Assert.IsTrue(markdown.Contains("| Time | Building Buys | Upgrade Buys |"));
+            Assert.IsTrue(markdown.Contains("Farms"));
+            Assert.IsTrue(markdown.Contains("Food:"));
+        }
+
+        [Test]
         public void FacadeUpdatesViewModelAfterPurchase()
         {
             var game = new KingdomGame();

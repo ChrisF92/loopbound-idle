@@ -61,7 +61,7 @@ namespace LoopboundIdle.Kingdom.Core
             {
                 if (resources[i].resourceId == resourceId)
                 {
-                    resources[i].amount = Math.Max(0d, amount);
+                    resources[i].amount = SanitizeAmount(amount);
                     return;
                 }
             }
@@ -148,6 +148,16 @@ namespace LoopboundIdle.Kingdom.Core
                 new ResourceAmount(ResourceId.Authority, 0d),
                 new ResourceAmount(ResourceId.Legacy, 0d)
             };
+        }
+
+        private static double SanitizeAmount(double amount)
+        {
+            if (double.IsNaN(amount) || double.IsInfinity(amount) || amount < 0d)
+            {
+                return 0d;
+            }
+
+            return amount;
         }
     }
 }
