@@ -27,6 +27,9 @@ Packages/                           Unity package manifest
 ProjectSettings/                    Minimal Unity project version settings
 ```
 
+The first Unity scene should use `KingdomGameController` as the bridge between
+UI buttons/text and the pure C# `KingdomGame` facade.
+
 ## Recommended engine direction
 
 Use Unity for the shipped Android client. The main reason is practical: Android

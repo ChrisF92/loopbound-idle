@@ -1,4 +1,6 @@
+using System.IO;
 using LoopboundIdle.Kingdom.Core;
+using LoopboundIdle.Kingdom.Persistence;
 using LoopboundIdle.Kingdom.Presentation;
 using NUnit.Framework;
 
@@ -46,6 +48,60 @@ namespace LoopboundIdle.Kingdom.Tests.EditMode
             Assert.AreEqual(1, importedGame.State.GetBuildingProgress(BuildingId.Farm).level);
             Assert.AreEqual(game.State.wallet.Get(ResourceId.Food), importedGame.State.wallet.Get(ResourceId.Food));
             Assert.AreEqual(1000L, importedGame.State.lastSavedUnixTimeSeconds);
+        }
+
+        [Test]
+        public void FacadeSavesLoadsAndAppliesOfflineProgress()
+        {
+            var catalog = KingdomCatalog.CreateDefault();
+            var path = Path.Combine(Path.GetTempPath(), "loopbound-kingdom-facade-save.json");
+            var store = new KingdomFileSaveStore(path);
+
+            try
+            {
+                var game = new KingdomGame(catalog, null, store);
+                Assert.IsTrue(game.BuyBuilding(BuildingId.Farm));
+                var foodBeforeSave = game.State.wallet.Get(ResourceId.Food);
+
+                Assert.IsTrue(game.Save(10L));
+
+                var loadedGame = new KingdomGame(catalog, null, store);
+                Assert.IsTrue(loadedGame.Load(20L));
+
+                Assert.AreEqual(10d, loadedGame.LastOfflineSeconds);
+                Assert.AreEqual(20L, loadedGame.State.lastSavedUnixTimeSeconds);
+                Assert.Greater(loadedGame.State.wallet.Get(ResourceId.Food), foodBeforeSave);
+                Assert.AreEqual("10s", loadedGame.ViewModel.lastOfflineLabel);
+            }
+            finally
+            {
+                store.Delete();
+            }
+        }
+
+        [Test]
+        public void FailedImportKeepsCurrentState()
+        {
+            var game = new KingdomGame();
+            Assert.IsTrue(game.BuyBuilding(BuildingId.Farm));
+
+            Assert.IsFalse(game.ImportSave("not a save", 100L));
+
+            Assert.AreEqual(1, game.State.GetBuildingProgress(BuildingId.Farm).level);
+            Assert.IsNotEmpty(game.LastError);
+        }
+
+        [Test]
+        public void ChallengeViewModelReflectsActiveChallenge()
+        {
+            var game = new KingdomGame();
+
+            Assert.IsTrue(game.StartChallenge(ChallengeId.FamineAge));
+
+            Assert.AreEqual(ChallengeId.FamineAge, game.ViewModel.activeChallengeId);
+            Assert.AreEqual("Famine Age", game.ViewModel.activeChallengeLabel);
+            Assert.IsTrue(game.ViewModel.challenges[0].active);
+            Assert.IsFalse(game.ViewModel.challenges[0].canComplete);
         }
     }
 }
