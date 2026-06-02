@@ -1,0 +1,21 @@
+{
+  "name": "LoopboundIdle.Kingdom.Tests.EditMode",
+  "rootNamespace": "LoopboundIdle.Kingdom.Tests.EditMode",
+  "references": [
+    "LoopboundIdle.Kingdom.Core"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
