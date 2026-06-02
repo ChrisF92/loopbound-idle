@@ -36,6 +36,110 @@ namespace LoopboundIdle.Kingdom.Presentation
             upgrades = new UpgradeViewModel[0];
             challenges = new ChallengeViewModel[0];
         }
+
+        public ResourceViewModel FindResource(ResourceId resourceId)
+        {
+            ResourceViewModel viewModel;
+            return TryFindResource(resourceId, out viewModel) ? viewModel : null;
+        }
+
+        public bool TryFindResource(ResourceId resourceId, out ResourceViewModel viewModel)
+        {
+            viewModel = null;
+            if (resources == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < resources.Length; i++)
+            {
+                if (resources[i] != null && resources[i].resourceId == resourceId)
+                {
+                    viewModel = resources[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public BuildingViewModel FindBuilding(BuildingId buildingId)
+        {
+            BuildingViewModel viewModel;
+            return TryFindBuilding(buildingId, out viewModel) ? viewModel : null;
+        }
+
+        public bool TryFindBuilding(BuildingId buildingId, out BuildingViewModel viewModel)
+        {
+            viewModel = null;
+            if (buildings == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < buildings.Length; i++)
+            {
+                if (buildings[i] != null && buildings[i].buildingId == buildingId)
+                {
+                    viewModel = buildings[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public UpgradeViewModel FindUpgrade(UpgradeId upgradeId)
+        {
+            UpgradeViewModel viewModel;
+            return TryFindUpgrade(upgradeId, out viewModel) ? viewModel : null;
+        }
+
+        public bool TryFindUpgrade(UpgradeId upgradeId, out UpgradeViewModel viewModel)
+        {
+            viewModel = null;
+            if (upgrades == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < upgrades.Length; i++)
+            {
+                if (upgrades[i] != null && upgrades[i].upgradeId == upgradeId)
+                {
+                    viewModel = upgrades[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public ChallengeViewModel FindChallenge(ChallengeId challengeId)
+        {
+            ChallengeViewModel viewModel;
+            return TryFindChallenge(challengeId, out viewModel) ? viewModel : null;
+        }
+
+        public bool TryFindChallenge(ChallengeId challengeId, out ChallengeViewModel viewModel)
+        {
+            viewModel = null;
+            if (challenges == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < challenges.Length; i++)
+            {
+                if (challenges[i] != null && challenges[i].challengeId == challengeId)
+                {
+                    viewModel = challenges[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     [Serializable]

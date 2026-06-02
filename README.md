@@ -34,6 +34,9 @@ See `docs/prototype-ui-wiring-checklist.md` for the first playable scene wiring
 map. `KingdomBalanceSimulator` can run deterministic early-game autoplay
 snapshots without opening Unity.
 
+See `docs/manual-qa-checklist.md` for the first manual test pass once Unity or
+device access is available.
+
 ## Recommended engine direction
 
 Use Unity for the shipped Android client. The main reason is practical: Android

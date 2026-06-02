@@ -56,6 +56,39 @@ namespace LoopboundIdle.Kingdom.Tests.EditMode
         }
 
         [Test]
+        public void ViewModelLookupHelpersFindRowsById()
+        {
+            var game = new KingdomGame();
+
+            Assert.AreEqual(ResourceId.Food, game.ViewModel.FindResource(ResourceId.Food).resourceId);
+            Assert.AreEqual(BuildingId.Farm, game.ViewModel.FindBuilding(BuildingId.Farm).buildingId);
+            Assert.AreEqual(UpgradeId.CropRotation, game.ViewModel.FindUpgrade(UpgradeId.CropRotation).upgradeId);
+            Assert.AreEqual(ChallengeId.FamineAge, game.ViewModel.FindChallenge(ChallengeId.FamineAge).challengeId);
+        }
+
+        [Test]
+        public void ViewModelLookupHelpersHandleMissingRows()
+        {
+            var viewModel = new KingdomGameViewModel
+            {
+                resources = null,
+                buildings = new BuildingViewModel[0],
+                upgrades = new UpgradeViewModel[0],
+                challenges = new ChallengeViewModel[0]
+            };
+            ResourceViewModel resource;
+            BuildingViewModel building;
+            UpgradeViewModel upgrade;
+            ChallengeViewModel challenge;
+
+            Assert.IsNull(viewModel.FindResource(ResourceId.Food));
+            Assert.IsFalse(viewModel.TryFindResource(ResourceId.Food, out resource));
+            Assert.IsFalse(viewModel.TryFindBuilding(BuildingId.Farm, out building));
+            Assert.IsFalse(viewModel.TryFindUpgrade(UpgradeId.CropRotation, out upgrade));
+            Assert.IsFalse(viewModel.TryFindChallenge(ChallengeId.FamineAge, out challenge));
+        }
+
+        [Test]
         public void FacadeExportsAndImportsSaveText()
         {
             var game = new KingdomGame();

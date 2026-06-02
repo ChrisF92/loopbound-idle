@@ -110,6 +110,8 @@ Create one row per `ChallengeViewModel` in `challenges`.
 
 ## First playable acceptance pass
 
+Use `manual-qa-checklist.md` for the full pass. The minimum smoke test is:
+
 - Start with no save and see initial resources.
 - Buy Farms and Lumber Camps from the Buildings panel.
 - Watch Food and Wood amounts/rates update.
