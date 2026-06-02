@@ -18,6 +18,10 @@ The project is intentionally designed for a small Android release scope:
 
 ```text
 Assets/LoopboundIdle/Scripts/Core/   Unity-compatible game simulation code
+Assets/LoopboundIdle/Scripts/Persistence/
+                                    Save/load, export/import, and migrations
+Assets/LoopboundIdle/Scripts/Presentation/
+                                    KingdomGame facade, view models, formatting
 docs/                               Product, design, and implementation notes
 Packages/                           Unity package manifest
 ProjectSettings/                    Minimal Unity project version settings

@@ -16,7 +16,7 @@ namespace LoopboundIdle.Kingdom.Core
             ApplyProduction(state, catalog, seconds);
 
             state.elapsedSeconds += seconds;
-            state.collapsePressure += CalculateCollapsePressurePerSecond(state) * seconds;
+            state.collapsePressure += CalculateCollapsePressurePerSecondInternal(state) * seconds;
         }
 
         public double AdvanceOffline(KingdomState state, KingdomCatalog catalog, long currentUnixTimeSeconds)
@@ -46,21 +46,54 @@ namespace LoopboundIdle.Kingdom.Core
 
         public bool TryBuyBuilding(KingdomState state, KingdomCatalog catalog, BuildingId buildingId)
         {
-            var definition = catalog.GetBuilding(buildingId);
-            var progress = state.GetBuildingProgress(buildingId);
-            var costs = definition.CostForNextLevel(progress.level);
-
-            if (!state.wallet.Spend(costs))
+            if (!CanBuyBuilding(state, catalog, buildingId))
             {
                 return false;
             }
 
+            var definition = catalog.GetBuilding(buildingId);
+            var progress = state.GetBuildingProgress(buildingId);
+            var costs = definition.CostForNextLevel(progress.level);
+
+            state.wallet.Spend(costs);
             progress.level++;
             return true;
         }
 
+        public bool CanBuyBuilding(KingdomState state, KingdomCatalog catalog, BuildingId buildingId)
+        {
+            if (state == null || catalog == null || state.wallet == null)
+            {
+                return false;
+            }
+
+            var definition = catalog.GetBuilding(buildingId);
+            var progress = state.GetBuildingProgress(buildingId);
+            return state.wallet.CanAfford(definition.CostForNextLevel(progress.level));
+        }
+
         public bool TryBuyUpgrade(KingdomState state, KingdomCatalog catalog, UpgradeId upgradeId)
         {
+            if (!CanBuyUpgrade(state, catalog, upgradeId))
+            {
+                return false;
+            }
+
+            var progress = state.GetUpgradeProgress(upgradeId);
+            var definition = catalog.GetUpgrade(upgradeId);
+
+            state.wallet.Spend(definition.costs);
+            progress.purchased = true;
+            return true;
+        }
+
+        public bool CanBuyUpgrade(KingdomState state, KingdomCatalog catalog, UpgradeId upgradeId)
+        {
+            if (state == null || catalog == null || state.wallet == null)
+            {
+                return false;
+            }
+
             var progress = state.GetUpgradeProgress(upgradeId);
             if (progress.purchased)
             {
@@ -68,13 +101,7 @@ namespace LoopboundIdle.Kingdom.Core
             }
 
             var definition = catalog.GetUpgrade(upgradeId);
-            if (!state.wallet.Spend(definition.costs))
-            {
-                return false;
-            }
-
-            progress.purchased = true;
-            return true;
+            return state.wallet.CanAfford(definition.costs);
         }
 
         public bool StartChallenge(KingdomState state, KingdomCatalog catalog, ChallengeId challengeId)
@@ -133,6 +160,73 @@ namespace LoopboundIdle.Kingdom.Core
             var chronicleMultiplier = IsUpgradePurchased(state, UpgradeId.ChronicleVaults) ? 1.25d : 1d;
 
             return Math.Floor(Math.Sqrt(Math.Max(0d, kingdomValue) / 100d) * archiveMultiplier * pressureMultiplier * chronicleMultiplier);
+        }
+
+        public double CalculateProductionPerSecond(KingdomState state, KingdomCatalog catalog, ResourceId resourceId)
+        {
+            if (state == null || catalog == null)
+            {
+                return 0d;
+            }
+
+            var total = 0d;
+            for (var i = 0; i < state.buildings.Length; i++)
+            {
+                var progress = state.buildings[i];
+                if (progress.level <= 0)
+                {
+                    continue;
+                }
+
+                var definition = catalog.GetBuilding(progress.buildingId);
+                for (var j = 0; j < definition.production.Length; j++)
+                {
+                    var rate = definition.production[j];
+                    if (rate.resourceId == resourceId)
+                    {
+                        total += rate.amountPerSecond * progress.level * CalculateProductionMultiplier(state, catalog, resourceId);
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        public double CalculateBuildingProductionPerSecond(KingdomState state, KingdomCatalog catalog, BuildingId buildingId, ResourceId resourceId)
+        {
+            if (state == null || catalog == null)
+            {
+                return 0d;
+            }
+
+            var progress = state.GetBuildingProgress(buildingId);
+            if (progress.level <= 0)
+            {
+                return 0d;
+            }
+
+            var definition = catalog.GetBuilding(buildingId);
+            var total = 0d;
+            for (var i = 0; i < definition.production.Length; i++)
+            {
+                var rate = definition.production[i];
+                if (rate.resourceId == resourceId)
+                {
+                    total += rate.amountPerSecond * progress.level * CalculateProductionMultiplier(state, catalog, resourceId);
+                }
+            }
+
+            return total;
+        }
+
+        public double CalculateCollapsePressurePerSecond(KingdomState state)
+        {
+            if (state == null)
+            {
+                return 0d;
+            }
+
+            return CalculateCollapsePressurePerSecondInternal(state);
         }
 
         private static void ApplyProduction(KingdomState state, KingdomCatalog catalog, double seconds)
@@ -243,7 +337,7 @@ namespace LoopboundIdle.Kingdom.Core
             return multiplier;
         }
 
-        private static double CalculateCollapsePressurePerSecond(KingdomState state)
+        private static double CalculateCollapsePressurePerSecondInternal(KingdomState state)
         {
             var pressure = 1d / 600d;
             if (state.activeChallengeId == ChallengeId.ShortReign)

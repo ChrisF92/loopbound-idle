@@ -2,7 +2,9 @@
   "name": "LoopboundIdle.Kingdom.Tests.EditMode",
   "rootNamespace": "LoopboundIdle.Kingdom.Tests.EditMode",
   "references": [
-    "LoopboundIdle.Kingdom.Core"
+    "LoopboundIdle.Kingdom.Core",
+    "LoopboundIdle.Kingdom.Persistence",
+    "LoopboundIdle.Kingdom.Presentation"
   ],
   "includePlatforms": [
     "Editor"

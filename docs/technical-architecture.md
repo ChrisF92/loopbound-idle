@@ -25,7 +25,7 @@ into this layer.
 
 ### Presentation
 
-Future location: `Assets/LoopboundIdle/Scripts/Presentation`
+Location: `Assets/LoopboundIdle/Scripts/Presentation`
 
 Responsibilities:
 
@@ -41,7 +41,7 @@ not.
 
 ### Persistence
 
-Future location: `Assets/LoopboundIdle/Scripts/Persistence`
+Location: `Assets/LoopboundIdle/Scripts/Persistence`
 
 Responsibilities:
 
